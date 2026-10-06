@@ -1,0 +1,1087 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset=utf8>
+    <meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <style>
+        :root {
+            color-scheme: light;
+            box-sizing: border-box;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px)
+        }
+
+        html {
+            scroll-padding-top: env(safe-area-inset-top, 0px)
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font: 14px -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #faf9f5;
+            color: #141413
+        }
+
+        img {
+            max-width: 100%
+        }
+
+        [hidden]:not([hidden=until-found i]) {
+            display: none !important
+        }
+    </style>
+</head>
+
+<body>
+    <title>Tech Fest Budget Planner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+    <style>
+        /* Layout: a working ledger on the left (every rupee is an editable line), a sticky reading column on the right (donut, per-student bars, prizes, footfall scenarios). */
+        :root {
+            --bg: #f5f6f4;
+            --surface: #ffffff;
+            --ink: #15191b;
+            --ink-2: #4b5357;
+            --ink-3: #737b7f;
+            --rule: #dde1df;
+            --accent: #1d5c4b;
+            --accent-soft: #e3eee9;
+            --buffer: #c6cbc9;
+            --pos: #1d7a4f;
+            --neg: #c43b3b;
+            --s1: #2a78d6;
+            --s2: #eb6834;
+            --s3: #1baf7a;
+            --s4: #eda100;
+            --s5: #e87ba4;
+            --s6: #008300;
+            --s7: #4a3aa7;
+            --s8: #e34948;
+            --f-display: "Newsreader", Georgia, "Times New Roman", serif;
+            --f-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+            --f-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --bg: #111415;
+                --surface: #191d1e;
+                --ink: #eef1f0;
+                --ink-2: #b8bfbe;
+                --ink-3: #8b9392;
+                --rule: #2b3132;
+                --accent: #72c3a7;
+                --accent-soft: #1d2d28;
+                --buffer: #474e4f;
+                --pos: #4cc38a;
+                --neg: #ef7070;
+                --s1: #3987e5;
+                --s2: #d95926;
+                --s3: #199e70;
+                --s4: #c98500;
+                --s5: #d55181;
+                --s6: #008300;
+                --s7: #9085e9;
+                --s8: #e66767;
+                color-scheme: dark;
+            }
+        }
+
+        :root[data-theme="dark"] {
+            --bg: #111415;
+            --surface: #191d1e;
+            --ink: #eef1f0;
+            --ink-2: #b8bfbe;
+            --ink-3: #8b9392;
+            --rule: #2b3132;
+            --accent: #72c3a7;
+            --accent-soft: #1d2d28;
+            --buffer: #474e4f;
+            --pos: #4cc38a;
+            --neg: #ef7070;
+            --s1: #3987e5;
+            --s2: #d95926;
+            --s3: #199e70;
+            --s4: #c98500;
+            --s5: #d55181;
+            --s6: #008300;
+            --s7: #9085e9;
+            --s8: #e66767;
+            color-scheme: dark;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--ink);
+            font-family: var(--f-ui);
+            font-size: 14px;
+            line-height: 1.5
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-inline: 20px;
+            padding-block: 28px 56px
+        }
+
+        .num {
+            font-family: var(--f-num);
+            font-variant-numeric: tabular-nums
+        }
+
+        header.top {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 16px;
+            border-bottom: 1px solid var(--ink);
+            padding-bottom: 16px
+        }
+
+        .eyebrow {
+            font-size: 11px;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--ink-3);
+            font-weight: 600
+        }
+
+        h1 {
+            font-family: var(--f-display);
+            font-weight: 600;
+            font-size: clamp(28px, 4vw, 40px);
+            line-height: 1.08;
+            margin: 6px 0 4px;
+            text-wrap: balance;
+            letter-spacing: -.01em
+        }
+
+        .lede {
+            color: var(--ink-2);
+            margin: 0;
+            max-width: 62ch
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        button {
+            font: inherit;
+            font-weight: 500;
+            font-size: 13px;
+            border: 1px solid var(--rule);
+            background: var(--surface);
+            color: var(--ink);
+            padding: 8px 14px;
+            border-radius: 2px;
+            cursor: pointer
+        }
+
+        button:hover {
+            border-color: var(--ink-3)
+        }
+
+        button.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--surface)
+        }
+
+        button:focus-visible,
+        input:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px
+        }
+
+        .kpis {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            border-bottom: 1px solid var(--rule)
+        }
+
+        .kpi {
+            padding: 16px 16px 16px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0
+        }
+
+        .kpi+.kpi {
+            padding-left: 16px;
+            border-left: 1px solid var(--rule)
+        }
+
+        .kpi .label {
+            font-size: 12px;
+            color: var(--ink-2)
+        }
+
+        .kpi .value {
+            font-family: var(--f-num);
+            font-variant-numeric: tabular-nums;
+            font-size: clamp(20px, 2.4vw, 26px);
+            font-weight: 500;
+            letter-spacing: -.02em
+        }
+
+        .kpi .sub {
+            font-size: 12px;
+            color: var(--ink-3)
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border: 1px solid currentColor;
+            border-radius: 2px;
+            width: max-content
+        }
+
+        .chip.ok {
+            color: var(--pos)
+        }
+
+        .chip.tight {
+            color: #b07400
+        }
+
+        .chip.over {
+            color: var(--neg)
+        }
+
+        :root[data-theme="dark"] .chip.tight {
+            color: #f0b53d
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) .chip.tight {
+                color: #f0b53d
+            }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+            gap: 40px;
+            margin-top: 28px;
+            align-items: start
+        }
+
+        @media (max-width:980px) {
+            .grid {
+                grid-template-columns: minmax(0, 1fr)
+            }
+
+            .kpis {
+                grid-template-columns: repeat(2, minmax(0, 1fr))
+            }
+
+            .kpi:nth-child(3) {
+                padding-left: 0;
+                border-left: 0
+            }
+
+            .kpi:nth-child(n+3) {
+                border-top: 1px solid var(--rule)
+            }
+        }
+
+        @media (max-width:460px) {
+            .wrap {
+                padding-inline: 16px
+            }
+        }
+
+        h2 {
+            font-family: var(--f-display);
+            font-weight: 600;
+            font-size: 22px;
+            margin: 0 0 4px;
+            line-height: 1.2
+        }
+
+        .section-note {
+            color: var(--ink-3);
+            font-size: 12.5px;
+            margin: 0 0 14px
+        }
+
+        /* ledger */
+        .ledger {
+            display: flex;
+            flex-direction: column;
+            gap: 18px
+        }
+
+        fieldset {
+            border: 0;
+            border-top: 1px solid var(--ink);
+            margin: 0;
+            padding: 10px 0 0;
+            min-width: 0
+        }
+
+        legend.cat {
+            display: flex;
+            width: 100%;
+            align-items: baseline;
+            gap: 10px;
+            padding: 0;
+            float: left
+        }
+
+        fieldset .rows {
+            clear: both;
+            padding-top: 6px
+        }
+
+        .key {
+            width: 10px;
+            height: 10px;
+            flex: none;
+            transform: translateY(1px)
+        }
+
+        legend.cat .name {
+            font-weight: 600;
+            font-size: 14.5px
+        }
+
+        legend.cat .subtotal {
+            margin-left: auto;
+            font-family: var(--f-num);
+            font-variant-numeric: tabular-nums;
+            font-weight: 500
+        }
+
+        .cat-note {
+            font-size: 12px;
+            color: var(--ink-3);
+            margin: 2px 0 4px 20px;
+            clear: both
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: center;
+            padding: 6px 0 6px 20px;
+            border-bottom: 1px dotted var(--rule)
+        }
+
+        .row label {
+            color: var(--ink-2);
+            min-width: 0
+        }
+
+        .row .hint {
+            display: block;
+            font-size: 11.5px;
+            color: var(--ink-3)
+        }
+
+        .calc {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: flex-end;
+            flex-wrap: wrap
+        }
+
+        .calc .op {
+            color: var(--ink-3);
+            font-family: var(--f-num)
+        }
+
+        .calc .amt {
+            min-width: 84px;
+            text-align: right;
+            font-family: var(--f-num);
+            font-variant-numeric: tabular-nums
+        }
+
+        input[type=number] {
+            font-family: var(--f-num);
+            font-variant-numeric: tabular-nums;
+            font-size: 13.5px;
+            width: 92px;
+            padding: 5px 8px;
+            border: 1px solid var(--rule);
+            border-radius: 2px;
+            background: var(--surface);
+            color: var(--ink);
+            text-align: right
+        }
+
+        input.qty {
+            width: 76px
+        }
+
+        input[type=number]:hover {
+            border-color: var(--ink-3)
+        }
+
+        .toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12.5px;
+            color: var(--ink-2);
+            padding: 6px 0 2px 20px;
+            cursor: pointer
+        }
+
+        .toggle input {
+            accent-color: var(--accent);
+            width: 16px;
+            height: 16px
+        }
+
+        .rev .row {
+            padding-left: 0
+        }
+
+        .rev {
+            border-top: 1px solid var(--ink)
+        }
+
+        .rev-total {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-weight: 600
+        }
+
+        .range {
+            width: 100%;
+            accent-color: var(--accent);
+            margin: 4px 0 0
+        }
+
+        /* reading column */
+        .read {
+            position: sticky;
+            top: calc(env(safe-area-inset-top, 0px) + 16px);
+            display: flex;
+            flex-direction: column;
+            gap: 30px
+        }
+
+        @media (max-width:980px) {
+            .read {
+                position: static
+            }
+        }
+
+        .panel {
+            border-top: 1px solid var(--ink);
+            padding-top: 12px
+        }
+
+        .donut-wrap {
+            display: grid;
+            grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+            gap: 22px;
+            align-items: center
+        }
+
+        @media (max-width:520px) {
+            .donut-wrap {
+                grid-template-columns: minmax(0, 1fr)
+            }
+
+            .donut-wrap svg {
+                max-width: 260px;
+                margin: 0 auto
+            }
+        }
+
+        svg {
+            display: block;
+            width: 100%;
+            height: auto;
+            overflow: visible
+        }
+
+        .slice {
+            cursor: pointer;
+            transition: opacity .15s
+        }
+
+        .dim .slice {
+            opacity: .28
+        }
+
+        .dim .slice.on {
+            opacity: 1
+        }
+
+        .legend {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column
+        }
+
+        .legend li {
+            display: grid;
+            grid-template-columns: 12px minmax(0, 1fr) auto 48px;
+            gap: 8px;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px dotted var(--rule);
+            cursor: default;
+            font-size: 13px
+        }
+
+        .legend li .v {
+            font-family: var(--f-num);
+            font-variant-numeric: tabular-nums
+        }
+
+        .legend li .p {
+            font-family: var(--f-num);
+            font-variant-numeric: tabular-nums;
+            color: var(--ink-3);
+            text-align: right
+        }
+
+        .legend li.hl {
+            background: var(--accent-soft)
+        }
+
+        .legend .sw {
+            width: 10px;
+            height: 10px
+        }
+
+        .center-big {
+            font-family: var(--f-num);
+            font-size: 19px;
+            font-weight: 500;
+            fill: var(--ink)
+        }
+
+        .center-small {
+            font-size: 10.5px;
+            fill: var(--ink-3);
+            letter-spacing: .04em
+        }
+
+        .bars .bar-row {
+            display: grid;
+            grid-template-columns: 150px minmax(0, 1fr) 62px;
+            gap: 10px;
+            align-items: center;
+            padding: 4px 0
+        }
+
+        @media (max-width:460px) {
+            .bars .bar-row {
+                grid-template-columns: 108px minmax(0, 1fr) 56px
+            }
+        }
+
+        .bars .bar-row .lbl {
+            font-size: 12.5px;
+            color: var(--ink-2);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .bars .track {
+            height: 14px;
+            position: relative
+        }
+
+        .bars .fill {
+            height: 100%;
+            border-radius: 0 4px 4px 0;
+            min-width: 2px
+        }
+
+        .bars .val {
+            font-family: var(--f-num);
+            font-variant-numeric: tabular-nums;
+            font-size: 12.5px;
+            text-align: right
+        }
+
+        .bars .bar-row:hover .lbl {
+            color: var(--ink)
+        }
+
+        .prize .split {
+            font-size: 11.5px;
+            color: var(--ink-3);
+            font-family: var(--f-num)
+        }
+
+        .prize .bar-row {
+            grid-template-columns: 120px minmax(0, 1fr) 70px
+        }
+
+        .axis-note {
+            font-size: 11.5px;
+            color: var(--ink-3);
+            margin-top: 6px
+        }
+
+        .tip {
+            position: fixed;
+            pointer-events: none;
+            background: var(--ink);
+            color: var(--bg);
+            padding: 6px 9px;
+            font-size: 12px;
+            border-radius: 2px;
+            z-index: 10;
+            max-width: 240px;
+            line-height: 1.35
+        }
+
+        .tip b {
+            font-family: var(--f-num);
+            font-weight: 500
+        }
+
+        .foot {
+            margin-top: 40px;
+            border-top: 1px solid var(--rule);
+            padding-top: 12px;
+            color: var(--ink-3);
+            font-size: 12px;
+            max-width: 80ch
+        }
+
+        .toast {
+            font-size: 12.5px;
+            color: var(--pos);
+            align-self: center
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important
+            }
+        }
+    </style>
+
+    <div class="wrap">
+        <header class="top">
+            <div>
+                <div class="eyebrow">CSE Technical Fest 2026 · 12 to 14 October</div>
+                <h1>Where the ₹149 goes</h1>
+                <p class="lede">Every figure below is editable. Change a number and the charts, the buffer and the
+                    break-even footfall update instantly. Starting values are planning estimates, not quotes.</p>
+            </div>
+            <div class="actions">
+                <span class="toast" id="toast" hidden></span>
+                <button id="copyBtn" class="primary" type="button">Copy summary</button>
+                <button id="resetBtn" type="button">Reset to estimates</button>
+            </div>
+        </header>
+
+        <section class="kpis" aria-label="Summary">
+            <div class="kpi"><span class="label">Collected from students</span><span class="value"
+                    id="kRev"></span><span class="sub" id="kRevSub"></span></div>
+            <div class="kpi"><span class="label">Planned spend</span><span class="value" id="kSpend"></span><span
+                    class="sub" id="kSpendSub"></span></div>
+            <div class="kpi"><span class="label">Buffer left</span><span class="value" id="kBuf"></span><span
+                    id="kChip"></span></div>
+            <div class="kpi"><span class="label">Break-even footfall</span><span class="value" id="kBe"></span><span
+                    class="sub" id="kBeSub"></span></div>
+        </section>
+
+        <div class="grid">
+            <section aria-labelledby="ledgerH">
+                <h2 id="ledgerH">Budget ledger</h2>
+                <p class="section-note">Amounts in rupees. Quantity × unit rate where it applies.</p>
+
+                <fieldset class="rev" id="revenue">
+                    <div class="row"><label for="students">Students paying<span class="hint">Expected 1,000 to
+                                1,200</span></label>
+                        <div class="calc"><input type="number" id="students" min="0" step="10" inputmode="numeric">
+                        </div>
+                    </div>
+                    <input class="range" type="range" id="studentsRange" min="600" max="1500" step="10"
+                        aria-label="Students paying slider">
+                    <div class="row"><label for="fee">Fee per student</label>
+                        <div class="calc"><input type="number" id="fee" min="0" step="1" inputmode="numeric"></div>
+                    </div>
+                    <div class="row"><label for="gw">Collection charges (%)<span class="hint">Set about 2 if fees go
+                                through an online payment gateway</span></label>
+                        <div class="calc"><input type="number" id="gw" min="0" max="20" step="0.1" inputmode="decimal">
+                        </div>
+                    </div>
+                    <div class="row"><label for="target">Buffer target (% of collection)<span class="hint">Reserve for
+                                last-minute costs</span></label>
+                        <div class="calc"><input type="number" id="target" min="0" max="50" step="1"
+                                inputmode="numeric"></div>
+                    </div>
+                    <div class="rev-total"><span>Net collection</span><span class="num" id="revNet"></span></div>
+                </fieldset>
+
+                <div class="ledger" id="ledger"></div>
+            </section>
+
+            <section class="read" aria-label="Charts">
+                <div class="panel">
+                    <h2>Allocation</h2>
+                    <p class="section-note" id="donutNote">Share of the net collection. Grey is the unspent buffer.</p>
+                    <div class="donut-wrap" id="donutWrap">
+                        <svg id="donut" viewBox="0 0 240 240" role="img"
+                            aria-label="Budget allocation donut chart"></svg>
+                        <ul class="legend" id="legend"></ul>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2>Per student</h2>
+                    <p class="section-note">Rupees of each student's fee spent on each head.</p>
+                    <div class="bars" id="perStudent"></div>
+                </div>
+
+                <div class="panel">
+                    <h2>Prize pool</h2>
+                    <p class="section-note">Total per competition, split as 1st / 2nd / 3rd.</p>
+                    <div class="bars prize" id="prizes"></div>
+                </div>
+
+                <div class="panel">
+                    <h2>If footfall changes</h2>
+                    <p class="section-note">Buffer left at each turnout, with every other line held as planned.</p>
+                    <svg id="scen" viewBox="0 0 520 200" role="img" aria-label="Buffer at different footfalls"></svg>
+                    <div class="axis-note" id="scenNote"></div>
+                </div>
+            </section>
+        </div>
+
+        <p class="foot">Planning estimates, to be replaced with real quotes: certificate print rate, memento cost,
+            printing, food and games materials. Honorarium follows the organizing team's rates (₹8,000 per auditorium
+            session, ₹3,000 per smaller-venue session); lower the session counts as trainers agree to pro bono. Camera
+            and gimbal rental is awaiting confirmation.</p>
+    </div>
+    <div class="tip" id="tip" hidden></div>
+
+    <script>
+        (function () {
+            const DEFAULTS = {
+                students: 1100, fee: 149, gw: 0, target: 10, digitalCerts: false, certLink: true,
+                cats: [
+                    {
+                        id: "hon", name: "Trainer honorarium", color: "--s1", note: "Lower a count each time a trainer agrees to pro bono.", lines: [
+                            { id: "aud", label: "Auditorium sessions paid", hint: "5 tracks, ₹8,000 each", qty: 5, unit: 8000 },
+                            { id: "small", label: "Smaller-venue sessions paid", hint: "4 tracks, ₹3,000 each", qty: 4, unit: 3000 }]
+                    },
+                    {
+                        id: "prize", name: "Prize money", color: "--s2", note: "Cash prizes for Day 3.", lines: [
+                            { id: "h1", label: "Hackathon 1st", unit: 6000, prize: "Hackathon", place: 1 },
+                            { id: "h2", label: "Hackathon 2nd", unit: 4000, prize: "Hackathon", place: 2 },
+                            { id: "h3", label: "Hackathon 3rd", unit: 2000, prize: "Hackathon", place: 3 },
+                            { id: "i1", label: "Ideathon 1st", unit: 3000, prize: "Ideathon", place: 1 },
+                            { id: "i2", label: "Ideathon 2nd", unit: 2000, prize: "Ideathon", place: 2 },
+                            { id: "i3", label: "Ideathon 3rd", unit: 1000, prize: "Ideathon", place: 3 },
+                            { id: "c1", label: "Code Sprint 1st", unit: 3000, prize: "Code Sprint", place: 1 },
+                            { id: "c2", label: "Code Sprint 2nd", unit: 2000, prize: "Code Sprint", place: 2 },
+                            { id: "c3", label: "Code Sprint 3rd", unit: 1000, prize: "Code Sprint", place: 3 },
+                            { id: "g", label: "Fun games pool", hint: "Treasure hunt / escape room, code relay", unit: 3000, prize: "Fun games", place: 1 }]
+                    },
+                    {
+                        id: "media", name: "Camera and media", color: "--s3", note: "Rental quote awaiting confirmation.", lines: [
+                            { id: "rent", label: "Cameras + 2 gimbals rental", hint: "Covers all 3 days", unit: 20000 },
+                            { id: "edit", label: "Editing (outsourced, if any)", hint: "0 if edited in-house", unit: 0 }]
+                    },
+                    {
+                        id: "gifts", name: "Gifts and mementos", color: "--s4", note: "For trainers, judges and chief guests.", lines: [
+                            { id: "mem", label: "Mementos", hint: "9 trainers + 8 judges + 3 guests", qty: 20, unit: 600 }]
+                    },
+                    {
+                        id: "cert", name: "Certificates", color: "--s5", note: "", lines: [
+                            { id: "part", label: "Participation certificates", hint: "Printed, one per student", qty: 1100, unit: 8, link: "students" },
+                            { id: "merit", label: "Winner, trainer and judge certificates", hint: "Premium print", qty: 60, unit: 40 }]
+                    },
+                    {
+                        id: "print", name: "Printing and branding", color: "--s6", note: "", lines: [
+                            { id: "flex", label: "Flex banners and standees", unit: 6000 },
+                            { id: "back", label: "Stage backdrop", unit: 4000 },
+                            { id: "badge", label: "ID badges and lanyards", hint: "Volunteers, trainers, guests", qty: 50, unit: 40 }]
+                    },
+                    {
+                        id: "food", name: "Food and refreshments", color: "--s7", note: "", lines: [
+                            { id: "spk", label: "Trainer and judge lunch and tea", hint: "3 days", unit: 6000 },
+                            { id: "hack", label: "Hackathon snacks", hint: "About 120 participants", qty: 120, unit: 50 },
+                            { id: "vol", label: "Volunteer refreshments", unit: 3000 }]
+                    },
+                    {
+                        id: "log", name: "Games and logistics", color: "--s8", note: "", lines: [
+                            { id: "props", label: "Fun game props and materials", unit: 3000 },
+                            { id: "stat", label: "Stationery and miscellaneous", unit: 2000 }]
+                    }
+                ]
+            };
+            const KEY = "techfest-budget-v1";
+            let S = load();
+            function clone(o) { return JSON.parse(JSON.stringify(o)) }
+            function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.cats && s.cats.length === DEFAULTS.cats.length) return s; } catch (e) { } return clone(DEFAULTS); }
+            function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
+
+            const inr = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
+            const inr1 = new Intl.NumberFormat("en-IN", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+            const R = v => "₹" + inr.format(Math.round(v));
+            const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+            const $ = id => document.getElementById(id);
+
+            function lineQty(l, students) { if (l.link === "students" && S.certLink) return students; return l.qty == null ? 1 : (+l.qty || 0); }
+            function lineUnit(l) { if (l.id === "part" && S.digitalCerts) return 0; return +l.unit || 0; }
+            function catTotal(c, students) { return c.lines.reduce((a, l) => a + lineQty(l, students) * lineUnit(l), 0); }
+            function compute(students) {
+                students = students == null ? (+S.students || 0) : students;
+                const net = students * (+S.fee || 0) * (1 - (+S.gw || 0) / 100);
+                const cats = S.cats.map(c => ({ id: c.id, name: c.name, color: c.color, total: catTotal(c, students) }));
+                const spend = cats.reduce((a, c) => a + c.total, 0);
+                return { students, gross: students * (+S.fee || 0), net, cats, spend, buffer: net - spend };
+            }
+            function breakEven() {
+                const per = (+S.fee || 0) * (1 - (+S.gw || 0) / 100);
+                const certLine = S.cats.find(c => c.id === "cert").lines.find(l => l.id === "part");
+                const varCost = S.certLink ? lineUnit(certLine) : 0;
+                const fixed = compute(0).spend;
+                if (per - varCost <= 0) return Infinity;
+                return Math.ceil(fixed / (per - varCost));
+            }
+
+            /* ---------- ledger UI ---------- */
+            function buildLedger() {
+                const L = $("ledger"); L.innerHTML = "";
+                S.cats.forEach(c => {
+                    const fs = document.createElement("fieldset"); fs.dataset.cat = c.id;
+                    let h = `<legend class="cat"><span class="key" style="background:var(${c.color})"></span><span class="name">${c.name}</span><span class="subtotal" id="sub-${c.id}"></span></legend>`;
+                    if (c.note) h += `<p class="cat-note">${c.note}</p>`;
+                    h += `<div class="rows">`;
+                    c.lines.forEach(l => {
+                        const base = `${c.id}-${l.id}`;
+                        const hasQty = l.qty != null;
+                        h += `<div class="row"><label for="${base}-u">${l.label}${l.hint ? `<span class="hint">${l.hint}</span>` : ""}</label><div class="calc">`;
+                        if (hasQty) {
+                            h += `<input class="qty" type="number" id="${base}-q" min="0" step="1" inputmode="numeric" aria-label="${l.label} quantity" value="${l.qty}"${l.link ? ` data-link="1"` : ""}><span class="op">×</span>`;
+                            h += `<input type="number" id="${base}-u" min="0" step="1" inputmode="numeric" value="${l.unit}"><span class="op">=</span><span class="amt" id="${base}-a"></span>`;
+                        } else {
+                            h += `<input type="number" id="${base}-u" min="0" step="100" inputmode="numeric" value="${l.unit}">`;
+                        }
+                        h += `</div></div>`;
+                    });
+                    if (c.id === "cert") {
+                        h += `<label class="toggle"><input type="checkbox" id="certLink" ${S.certLink ? "checked" : ""}> Match participation certificates to students paying</label>`;
+                        h += `<label class="toggle"><input type="checkbox" id="digital" ${S.digitalCerts ? "checked" : ""}> Send participation certificates digitally (no print cost)</label>`;
+                    }
+                    h += `</div>`;
+                    fs.innerHTML = h; L.appendChild(fs);
+                });
+                L.addEventListener("input", onLedger);
+                L.addEventListener("change", onLedger);
+            }
+            function onLedger(e) {
+                const t = e.target;
+                if (t.id === "certLink") { S.certLink = t.checked; return update(); }
+                if (t.id === "digital") { S.digitalCerts = t.checked; return update(); }
+                const m = t.id.match(/^(\w+)-(\w+)-(q|u)$/); if (!m) return;
+                const c = S.cats.find(x => x.id === m[1]); const l = c && c.lines.find(x => x.id === m[2]); if (!l) return;
+                const v = Math.max(0, parseFloat(t.value) || 0);
+                if (m[3] === "q") { l.qty = v; if (l.link) S.certLink = false; } else l.unit = v;
+                update();
+            }
+            let revBound = false;
+            function bindRevenue() {
+                const st = $("students"), rg = $("studentsRange");
+                st.value = S.students; rg.value = S.students; $("fee").value = S.fee; $("gw").value = S.gw; $("target").value = S.target;
+                if (revBound) return; revBound = true;
+                st.addEventListener("input", () => { S.students = Math.max(0, +st.value || 0); rg.value = S.students; update(); });
+                rg.addEventListener("input", () => { S.students = +rg.value; st.value = S.students; update(); });
+                $("fee").addEventListener("input", e => { S.fee = Math.max(0, +e.target.value || 0); update(); });
+                $("gw").addEventListener("input", e => { S.gw = Math.min(20, Math.max(0, +e.target.value || 0)); update(); });
+                $("target").addEventListener("input", e => { S.target = Math.min(50, Math.max(0, +e.target.value || 0)); update(); });
+            }
+
+            /* ---------- tooltip ---------- */
+            const tip = $("tip");
+            function showTip(html, ev) { tip.innerHTML = html; tip.hidden = false; moveTip(ev); }
+            function moveTip(ev) { const x = Math.min(ev.clientX + 14, innerWidth - tip.offsetWidth - 8); const y = Math.min(ev.clientY + 14, innerHeight - tip.offsetHeight - 8); tip.style.left = x + "px"; tip.style.top = y + "px"; }
+            function hideTip() { tip.hidden = true; }
+
+            /* ---------- donut ---------- */
+            function arc(cx, cy, r0, r1, a0, a1) {
+                const large = (a1 - a0) > Math.PI ? 1 : 0;
+                const p = (r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+                const [x0, y0] = p(r1, a0), [x1, y1] = p(r1, a1), [x2, y2] = p(r0, a1), [x3, y3] = p(r0, a0);
+                return `M${x0},${y0}A${r1},${r1} 0 ${large} 1 ${x1},${y1}L${x2},${y2}A${r0},${r0} 0 ${large} 0 ${x3},${y3}Z`;
+            }
+            function drawDonut(d) {
+                const svg = $("donut"), surf = css("--surface");
+                const parts = d.cats.filter(c => c.total > 0).map(c => ({ ...c, fill: css(c.color) }));
+                if (d.buffer > 0) parts.push({ id: "buffer", name: "Unspent buffer", total: d.buffer, fill: css("--buffer") });
+                const whole = Math.max(d.net, d.spend) || 1;
+                let a = -Math.PI / 2, out = "";
+                parts.forEach(p => {
+                    let sweep = p.total / whole * 2 * Math.PI; if (sweep >= 2 * Math.PI) sweep = 2 * Math.PI - 0.0001;
+                    out += `<path class="slice" data-id="${p.id}" d="${arc(120, 120, 66, 108, a, a + sweep)}" fill="${p.fill}" stroke="${surf}" stroke-width="2"></path>`;
+                    a += sweep;
+                });
+                const over = d.buffer < 0;
+                const pct = d.net > 0 ? d.spend / d.net * 100 : 0;
+                out += `<text x="120" y="112" text-anchor="middle" class="center-small">${over ? "OVER BY" : "PLANNED"}</text>`;
+                out += `<text x="120" y="134" text-anchor="middle" class="center-big">${over ? R(-d.buffer) : inr.format(Math.round(pct)) + "%"}</text>`;
+                out += `<text x="120" y="152" text-anchor="middle" class="center-small">${over ? "of the collection" : "of the collection"}</text>`;
+                svg.innerHTML = out;
+                $("donutNote").textContent = over ? "Planned spend is more than the collection. Every slice is a share of total spend." : "Share of the net collection. Grey is the unspent buffer.";
+
+                const lg = $("legend"); const base = over ? d.spend : d.net;
+                lg.innerHTML = parts.map(p => `<li data-id="${p.id}"><span class="sw" style="background:${p.fill}"></span><span>${p.name}</span><span class="v">${R(p.total)}</span><span class="p">${base ? inr1.format(p.total / base * 100) : "0.0"}%</span></li>`).join("")
+                    + d.cats.filter(c => c.total === 0).map(c => `<li><span class="sw" style="background:transparent;border:1px solid ${css(c.color)}"></span><span>${c.name}</span><span class="v">₹0</span><span class="p">0.0%</span></li>`).join("");
+
+                const wrap = $("donutWrap");
+                const hl = id => { wrap.classList.toggle("dim", !!id); svg.querySelectorAll(".slice").forEach(s => s.classList.toggle("on", s.dataset.id === id)); lg.querySelectorAll("li").forEach(li => li.classList.toggle("hl", li.dataset.id === id)); };
+                svg.querySelectorAll(".slice").forEach(s => {
+                    const p = parts.find(x => x.id === s.dataset.id);
+                    s.addEventListener("pointerenter", ev => { hl(p.id); showTip(`${p.name}<br><b>${R(p.total)}</b> · ${base ? inr1.format(p.total / base * 100) : 0}%`, ev); });
+                    s.addEventListener("pointermove", moveTip);
+                    s.addEventListener("pointerleave", () => { hl(null); hideTip(); });
+                });
+                lg.querySelectorAll("li[data-id]").forEach(li => { li.addEventListener("pointerenter", () => hl(li.dataset.id)); li.addEventListener("pointerleave", () => hl(null)); });
+            }
+
+            /* ---------- per-student bars ---------- */
+            function drawPerStudent(d) {
+                const n = d.students || 1;
+                const rows = d.cats.map(c => ({ name: c.name, v: c.total / n, fill: css(c.color) })).sort((a, b) => b.v - a.v);
+                const buf = { name: d.buffer >= 0 ? "Buffer" : "Shortfall", v: d.buffer / n, fill: d.buffer >= 0 ? css("--buffer") : css("--neg") };
+                const max = Math.max(...rows.map(r => r.v), Math.abs(buf.v), 1);
+                const html = [...rows, buf].map(r => `<div class="bar-row" data-t="${r.name}: ₹${inr1.format(r.v)} of every student's ₹${inr.format(S.fee)}"><span class="lbl">${r.name}</span><div class="track"><div class="fill" style="width:${Math.abs(r.v) / max * 100}%;background:${r.fill}"></div></div><span class="val">${r.v < 0 ? "-" : ""}₹${inr1.format(Math.abs(r.v))}</span></div>`).join("");
+                $("perStudent").innerHTML = html; hoverRows($("perStudent"));
+            }
+            function hoverRows(el) { el.querySelectorAll(".bar-row").forEach(r => { r.addEventListener("pointerenter", ev => showTip(r.dataset.t, ev)); r.addEventListener("pointermove", moveTip); r.addEventListener("pointerleave", hideTip); }); }
+
+            /* ---------- prizes ---------- */
+            function drawPrizes() {
+                const lines = S.cats.find(c => c.id === "prize").lines; const groups = {};
+                lines.forEach(l => { (groups[l.prize] = groups[l.prize] || []).push(+l.unit || 0); });
+                const entries = Object.entries(groups).map(([k, v]) => ({ k, v, t: v.reduce((a, b) => a + b, 0) }));
+                const max = Math.max(...entries.map(e => e.t), 1), fill = css("--s2");
+                $("prizes").innerHTML = entries.map(e => `<div class="bar-row" data-t="${e.k}: ${R(e.t)}${e.v.length > 1 ? " (" + e.v.map(x => R(x)).join(" / ") + ")" : ""}"><span class="lbl">${e.k}</span><div><div class="track"><div class="fill" style="width:${e.t / max * 100}%;background:${fill}"></div></div>${e.v.length > 1 ? `<div class="split">${e.v.map(x => inr.format(x)).join(" / ")}</div>` : ""}</div><span class="val">${R(e.t)}</span></div>`).join("");
+                hoverRows($("prizes"));
+            }
+
+            /* ---------- scenarios ---------- */
+            function drawScen(d) {
+                const svg = $("scen"); const W = 520, H = 200, padL = 8, padR = 8, top = 26, bot = 30;
+                const pts = [800, 900, 1000, 1100, 1200, 1300].map(n => ({ n, b: compute(n).buffer }));
+                const cur = d.students; if (!pts.some(p => p.n === cur) && cur > 0) { pts.push({ n: cur, b: d.buffer, cur: true }); pts.sort((a, b) => a.n - b.n); }
+                pts.forEach(p => { if (p.n === cur) p.cur = true; });
+                const maxAbs = Math.max(...pts.map(p => Math.abs(p.b)), 1);
+                const hasNeg = pts.some(p => p.b < 0), hasPos = pts.some(p => p.b > 0);
+                const plotH = H - top - bot - 16;
+                const zeroY = hasNeg && hasPos ? top + plotH * (Math.max(...pts.map(p => p.b)) / (Math.max(...pts.map(p => p.b)) - Math.min(...pts.map(p => p.b)))) : (hasNeg ? top : top + plotH);
+                const span = hasNeg && hasPos ? (Math.max(...pts.map(p => p.b)) - Math.min(...pts.map(p => p.b))) : maxAbs;
+                const k = plotH / span;
+                const slot = (W - padL - padR) / pts.length, bw = Math.min(46, slot * 0.58);
+                const pos = css("--pos"), neg = css("--neg"), ink2 = css("--ink-2"), ink3 = css("--ink-3"), rule = css("--rule"), inkc = css("--ink");
+                let out = `<line x1="${padL}" x2="${W - padR}" y1="${zeroY}" y2="${zeroY}" stroke="${ink3}" stroke-width="1"></line>`;
+                pts.forEach((p, i) => {
+                    const cx = padL + slot * i + slot / 2, h = Math.max(1, Math.abs(p.b) * k);
+                    const y = p.b >= 0 ? zeroY - h : zeroY;
+                    const r = Math.min(4, h / 2), fill = p.b >= 0 ? pos : neg;
+                    const path = p.b >= 0
+                        ? `M${cx - bw / 2},${zeroY}V${y + r}Q${cx - bw / 2},${y} ${cx - bw / 2 + r},${y}H${cx + bw / 2 - r}Q${cx + bw / 2},${y} ${cx + bw / 2},${y + r}V${zeroY}Z`
+                        : `M${cx - bw / 2},${zeroY}V${y + h - r}Q${cx - bw / 2},${y + h} ${cx - bw / 2 + r},${y + h}H${cx + bw / 2 - r}Q${cx + bw / 2},${y + h} ${cx + bw / 2},${y + h - r}V${zeroY}Z`;
+                    out += `<g class="sc" data-t="${inr.format(p.n)} students: buffer ${p.b < 0 ? "-" : ""}${R(Math.abs(p.b))}"><rect x="${cx - slot / 2}" y="${top - 20}" width="${slot}" height="${H - top + 20}" fill="transparent"></rect><path d="${path}" fill="${fill}" opacity="${p.cur ? 1 : .55}"></path>`;
+                    const ly = p.b >= 0 ? y - 6 : y + h + 13;
+                    out += `<text x="${cx}" y="${Math.max(12, Math.min(H - bot + 2, ly))}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="${p.cur ? inkc : ink2}">${p.b < 0 ? "-" : ""}${compact(Math.abs(p.b))}</text>`;
+                    out += `<text x="${cx}" y="${H - 8}" text-anchor="middle" font-size="11.5" font-weight="${p.cur ? 600 : 400}" fill="${p.cur ? inkc : ink3}">${inr.format(p.n)}${p.cur ? " ●" : ""}</text></g>`;
+                });
+                svg.innerHTML = out;
+                svg.querySelectorAll(".sc").forEach(g => { g.addEventListener("pointerenter", ev => showTip(g.dataset.t, ev)); g.addEventListener("pointermove", moveTip); g.addEventListener("pointerleave", hideTip); });
+                const be = breakEven();
+                $("scenNote").textContent = isFinite(be) ? `Students paying on the x axis, your current number marked ●. The fest covers its costs from ${inr.format(be)} paying students.` : "At this fee, costs can't be covered at any footfall.";
+            }
+            function compact(v) { if (v >= 100000) return "₹" + (v / 100000).toFixed(2).replace(/\.?0+$/, "") + "L"; if (v >= 1000) return "₹" + (v / 1000).toFixed(1).replace(/\.0$/, "") + "k"; return "₹" + Math.round(v); }
+
+            /* ---------- KPIs & ledger totals ---------- */
+            function update() {
+                const d = compute();
+                S.cats.forEach(c => {
+                    $("sub-" + c.id).textContent = R(catTotal(c, d.students));
+                    c.lines.forEach(l => { const a = $(`${c.id}-${l.id}-a`); if (a) a.textContent = R(lineQty(l, d.students) * lineUnit(l)); });
+                });
+                const pq = $("cert-part-q"); if (pq && S.certLink) { pq.value = d.students; }
+                const cl = $("certLink"); if (cl) cl.checked = S.certLink;
+                const pu = $("cert-part-u"); if (pu) { pu.disabled = S.digitalCerts; }
+                $("revNet").textContent = R(d.net);
+                $("kRev").textContent = R(d.net);
+                $("kRevSub").textContent = `${inr.format(d.students)} × ₹${inr.format(S.fee)}${+S.gw ? ` less ${S.gw}% charges` : ""}`;
+                $("kSpend").textContent = R(d.spend);
+                $("kSpendSub").textContent = d.net ? `${inr1.format(d.spend / d.net * 100)}% of the collection` : "";
+                $("kBuf").textContent = (d.buffer < 0 ? "-" : "") + R(Math.abs(d.buffer));
+                const tgt = d.net * (+S.target || 0) / 100;
+                let chip;
+                if (d.buffer < 0) chip = `<span class="chip over">✕ Over budget</span>`;
+                else if (d.buffer < tgt) chip = `<span class="chip tight">! Below ${S.target}% target (${R(tgt)})</span>`;
+                else chip = `<span class="chip ok">✓ Meets ${S.target}% target</span>`;
+                $("kChip").innerHTML = chip;
+                const be = breakEven();
+                $("kBe").textContent = isFinite(be) ? inr.format(be) + " students" : "Not reachable";
+                $("kBeSub").textContent = isFinite(be) ? (be <= d.students ? `${inr.format(d.students - be)} students of headroom` : `${inr.format(be - d.students)} more students needed`) : "Raise the fee or cut costs";
+                drawDonut(d); drawPerStudent(d); drawPrizes(); drawScen(d);
+                save();
+            }
+
+            /* ---------- copy & reset ---------- */
+            function summary() {
+                const d = compute(); const base = d.net || 1;
+                const lines = [`CSE Tech Fest 2026 budget (${inr.format(d.students)} students x Rs ${inr.format(S.fee)})`, `Collection: ${R(d.net)}`, ""];
+                d.cats.forEach(c => lines.push(`${c.name}: ${R(c.total)} (${inr1.format(c.total / base * 100)}%)`));
+                lines.push("", `Planned spend: ${R(d.spend)}`, `Buffer: ${d.buffer < 0 ? "-" : ""}${R(Math.abs(d.buffer))} (${inr1.format(d.buffer / base * 100)}%)`);
+                const be = breakEven(); if (isFinite(be)) lines.push(`Break-even: ${inr.format(be)} paying students`);
+                return lines.join("\n").replace(/₹/g, "Rs ");
+            }
+            function toast(t) { const el = $("toast"); el.textContent = t; el.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => el.hidden = true, 2200); }
+            $("copyBtn").addEventListener("click", () => {
+                const text = summary();
+                const fallback = () => { const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand("copy"); } catch (e) { } ta.remove(); toast(ok ? "Copied" : "Copy blocked here. Select the figures manually."); };
+                try { navigator.clipboard.writeText(text).then(() => toast("Copied"), fallback); } catch (e) { fallback(); }
+            });
+            $("resetBtn").addEventListener("click", () => { S = clone(DEFAULTS); init(); toast("Reset to estimates"); });
+
+            function init() { buildLedger(); bindRevenue(); update(); }
+            // rebuild listeners safely on reset
+            const _build = buildLedger; buildLedger = function () { const old = $("ledger"); const fresh = old.cloneNode(false); old.replaceWith(fresh); _build(); };
+            init();
+            const mq = matchMedia("(prefers-color-scheme: dark)"); mq.addEventListener && mq.addEventListener("change", update);
+            new MutationObserver(update).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+        })();
+    </script>
+
+</body>
+
+</html>
